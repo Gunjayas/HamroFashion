@@ -159,3 +159,4 @@ D:\Projects\HamroFashion\HamroFashion\HamroFashion.Api\obj\Debug\net8.0\refint\H
 D:\Projects\HamroFashion\HamroFashion\HamroFashion.Api\obj\Debug\net8.0\HamroFashion.Api.pdb
 D:\Projects\HamroFashion\HamroFashion\HamroFashion.Api\obj\Debug\net8.0\HamroFashion.Api.genruntimeconfig.cache
 D:\Projects\HamroFashion\HamroFashion\HamroFashion.Api\obj\Debug\net8.0\ref\HamroFashion.Api.dll
+D:\Projects\HamroFashion\HamroFashion\HamroFashion.Api\obj\Debug\net8.0\HamroFashion.Api.sourcelink.json
