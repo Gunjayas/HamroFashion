@@ -5,7 +5,7 @@ namespace HamroFashion.Api.V1.Services
 {
     public class ImageService
     {
-        private readonly string storageAccount = "hamrofashion";
+        /*private readonly string storageAccount = "hamrofashion";
         private readonly string accessKey = "";
         private readonly BlobServiceClient blobServiceClient;
 
@@ -62,7 +62,7 @@ namespace HamroFashion.Api.V1.Services
 
             return blob.Uri.AbsoluteUri;
 
-        }
+        }*/
 
     }
 }
