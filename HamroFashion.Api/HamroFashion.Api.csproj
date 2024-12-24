@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="V1\Validators\**" />
+    <Content Remove="V1\Validators\**" />
+    <EmbeddedResource Remove="V1\Validators\**" />
+    <None Remove="V1\Validators\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Asp.Versioning.Http" Version="8.1.0" />
     <PackageReference Include="Azure.Identity" Version="1.13.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.22.2" />
@@ -26,11 +33,6 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.9.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="V1\Validators\" />
-    <Folder Include="V1\Utils\" />
   </ItemGroup>
 
 </Project>

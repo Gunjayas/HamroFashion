@@ -20,6 +20,7 @@ namespace HamroFashion.Api.V1.Endpoints
         public static IServiceCollection AddProductEndpointV1(this IServiceCollection services)
         {
             services.AddScoped<ProductService>();
+            services.AddScoped<ImageService>();
             return services;
         }
 
@@ -38,6 +39,7 @@ namespace HamroFashion.Api.V1.Endpoints
 
             group
                 .MapPost("/create", CreateAsync)
+                .RequireAuthorization("CanPost")
                 .HasApiVersion(version)
                 .WithOpenApi(opt => new(opt) { OperationId = "Create Product", Description = "Attempts to create a new product" });
 
@@ -52,7 +54,7 @@ namespace HamroFashion.Api.V1.Endpoints
                 .WithOpenApi(opt => new(opt) { OperationId = "Create Product", Description = "Attempts to delete a product" });
 
             group
-                .MapPost("/{productId}", GetByIdAsync)
+                .MapGet("/{productId}", GetByIdAsync)
                 .HasApiVersion(version)
                 .WithOpenApi(opt => new(opt) { OperationId = "Create Product", Description = "Attempts to get a product by id" });
 
@@ -66,7 +68,7 @@ namespace HamroFashion.Api.V1.Endpoints
 
         public static async Task<IResult> CreateAsync([FromBody] CreateProduct command, [FromServices] ProductService service, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
         {
-            var res = await service.CreateAsync(command, CurrentUser, cancellationToken);
+            var res = await service.CreateAsync(command, cancellationToken);
             return Results.Ok(res);
         }
 

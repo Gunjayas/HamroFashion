@@ -62,6 +62,7 @@ namespace HamroFashion.Api.V1.Data.Entities
         {
             var model = new UserModel
             {
+                Id = entity.Id,
                 PasswordHash = entity.PasswordHash,
                 EmailAddress = entity.EmailAddress,
                 UserName = entity.UserName,

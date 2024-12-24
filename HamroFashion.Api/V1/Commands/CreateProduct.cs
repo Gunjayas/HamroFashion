@@ -9,8 +9,9 @@
         public string? Description { get; set; }
         public string Color { get; set; }
         //temporary optional
-        public string[]? ImageUrls { get; set; }
+        public string? ImageUrl { get; set; }
         public string? Size { get; set; }
+        public int Price { get; set; }
         public int Quantity { get; set; }
         public bool Availability { get; set; } = true;
 
@@ -19,6 +20,6 @@
         /// </summary>
         public ICollection<Guid>? ProductCollection { get; set; }
         public ICollection<Guid>? ProductLabel { get; set; }
-        public Guid? ProductCategory { get; set; }
+        public string? ProductCategory { get; set; }
     }
 }

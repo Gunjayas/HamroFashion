@@ -8,13 +8,14 @@ namespace HamroFashion.Api.V1.Models
         public string Name { get; set; }
         public string? Description { get; set; }
         public string Color { get; set; }
-        public string[] ImageUrls { get; set; }
+        public string ImageUrl { get; set; }
         public string Size { get; set; }
         public int Quantity { get; set; }
         public bool Availability { get; set; } = true;
         public TagModel? Category { get; set; }
         public IEnumerable<TagModel>? Collection { get; set; }
         public IEnumerable<TagModel>? Label { get; set; }
+        public decimal Price { get; set; }
 
         /// <summary>
         /// Default constructor

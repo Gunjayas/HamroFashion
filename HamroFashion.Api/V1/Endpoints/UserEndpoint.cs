@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using HamroFashion.Api.V1.Commands;
+using HamroFashion.Api.V1.Extensions;
 using HamroFashion.Api.V1.Middleware;
 using HamroFashion.Api.V1.Services;
 using Microsoft.AspNetCore.Builder;
@@ -33,12 +34,12 @@ namespace HamroFashion.Api.V1.Endpoints
               .ReportApiVersions()
               .Build();
 
-            var group = app.MapGroup("/users")
+            var group = app.MapGroup("/user")
                 .WithApiVersionSet(versionSet)
                 .AddEndpointFilter<ExceptionFilter>();
 
             group
-                .MapPost("/create", CreateAsync)
+                .MapPost("/", CreateAsync)
                 .HasApiVersion(version)
                 .WithOpenApi(opt => new(opt) { OperationId = "Create Product", Description = "Attempts to create a new product" });
 
@@ -48,7 +49,7 @@ namespace HamroFashion.Api.V1.Endpoints
                 .WithOpenApi(opt => new(opt) { OperationId = "Change Password", Description = "Attempts to change password" });
 
             group
-                .MapPost("/{userId}", GetByIdAsync)
+                .MapPost("/{userId}/userdetail", GetByIdAsync)
                 .HasApiVersion(version)
                 .WithOpenApi(opt => new(opt) { OperationId = "Get User By Id", Description = "Attempts to get a user by id" });
 
@@ -70,6 +71,11 @@ namespace HamroFashion.Api.V1.Endpoints
                 .MapPost("/cart/{productId}/add", AddToCart)
                 .HasApiVersion(version)
                 .WithOpenApi(opt => new(opt) { OperationId = "Add cart product", Description = "Attempts to add product to cart" });
+
+            group
+                .MapPost("/cart/{productId}/decreaseitem", DecreaseCartQuantity)
+                .HasApiVersion(version)
+                .WithOpenApi(opt => new(opt) { OperationId = "decrease cart item quantity", Description = "Attempts to decrease cart item quantity" });
 
             group
                 .MapPost("/cart/{productId}/remove", RemoveFromCart)
@@ -131,7 +137,7 @@ namespace HamroFashion.Api.V1.Endpoints
 
         public static async Task<IResult> GetByIdAsync([FromRoute] Guid userId, [FromServices] UserService service, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
         {
-            var res = await service.GetByIdAsync(userId, CurrentUser, cancellationToken);
+            var res = await service.GetByIdAsync(userId, cancellationToken);
             return Results.Ok(res);
         }
 
@@ -149,19 +155,27 @@ namespace HamroFashion.Api.V1.Endpoints
 
         public static async Task<IResult> GetCart([FromServices] UserService service, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
         {
-            var res = await service.GetCart(CurrentUser, cancellationToken);
+            var userId = CurrentUser.GetUserId();
+            var res = await service.GetCart(userId, cancellationToken);
             return Results.Ok(res);
         }
 
-        public static async Task<IResult> AddToCart([FromBody] AddToCart command, [FromServices] UserService service, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
+        public static async Task<IResult> AddToCart([FromRoute] Guid productId, [FromServices] UserService service, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
         {
-            await service.AddToCart(command, CurrentUser, cancellationToken);
+            var userId = CurrentUser.GetUserId();
+            await service.AddToCart(productId, userId, cancellationToken);
             return Results.Ok();
         }
 
         public static async Task<IResult> RemoveFromCart([FromRoute] Guid productId, [FromServices] UserService service, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
         {
-            await service.RemoveFromCart(productId, CurrentUser, cancellationToken);
+            var userId = CurrentUser.GetUserId();
+            await service.RemoveFromCart(productId, userId, cancellationToken);
+            return Results.Ok();
+        }
+        public static async Task<IResult> DecreaseCartQuantity([FromRoute] Guid productId, [FromServices] UserService service, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
+        {
+            await service.DecreaseCartQuantity(productId, CurrentUser, cancellationToken);
             return Results.Ok();
         }
     }

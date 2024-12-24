@@ -8,7 +8,7 @@ namespace HamroFashion.Api.V1.Data.Entities
         public string Name { get; set; }
         public string? Description { get; set; }
         public string Color { get; set; }
-        public string[] ImageUrls { get; set; }
+        public string ImageUrl { get; set; }
         public string Size { get; set; }
         public int Quantity { get; set; }
         public bool Availability { get; set; } = true;
@@ -30,13 +30,17 @@ namespace HamroFashion.Api.V1.Data.Entities
         {
             var model = new ProductModel
             {
+                CreatedById = entity.CreatedById,
+                CreatedOn = entity.CreatedOn,
+                Id = entity.Id,
                 Name = entity.Name,
                 Description = entity.Description,
                 Color = entity.Color,
-                ImageUrls = entity.ImageUrls,
+                ImageUrl = entity.ImageUrl,
                 Size = entity.Size,
                 Quantity = entity.Quantity,
-                Availability = entity.Availability
+                Availability = entity.Availability,
+                Price = entity.Price
             };
 
             if (entity.ProductCategory != null)

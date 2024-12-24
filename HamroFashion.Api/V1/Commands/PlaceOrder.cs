@@ -2,9 +2,11 @@
 {
     public record PlaceOrder
     {
-        public Guid CartId { get; set; }
         public string Address { get; set; }
-        public string Cuppon { get; set; }
+        public string Phone { get; set; }
+        public string EmailAddress { get; set; }
+        public string Name { get; set; }
         public string PaymentMethod { get; set; }
+        public Guid CartId { get; set; }
     }
 }

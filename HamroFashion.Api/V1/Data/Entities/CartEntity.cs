@@ -25,7 +25,8 @@ namespace HamroFashion.Api.V1.Data.Entities
             {
                 User = entity.User?.ToModel(),
                 CartItems = entity.CartItems?.ToModel(),
-                UserId = entity.UserId
+                UserId = entity.UserId,
+                TotalPrice = entity.TotalPrice
             };
 
         public static IEnumerable<CartModel> ToModel(this IEnumerable<CartEntity> entities)

@@ -7,5 +7,6 @@ export default interface CartItem extends BaseModel {
     cartId: string;
     product: Product;
     productId: string;
-    quantity: number;
+    quantity: string;
+    price: number
 }

@@ -4,9 +4,9 @@ namespace HamroFashion.Api.V1.Models
 {
     public record CartItemModel : BaseModel
     {
-        public CartModel Cart { get; set; }
+        public CartModel? Cart { get; set; }
         public Guid CartId { get; set; }
-        public ProductModel Product { get; set; }
+        public ProductModel? Product { get; set; }
         public Guid ProductId { get; set; }
         public int Quantity { get; set; }
 

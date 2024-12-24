@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Json;
 using HamroFashion.Api.V1.Extensions;
 using HamroFashion.Api.V1.Endpoints;
+using HamroFashion.Api.V1.Utils;
+using HamroFashion.Api.V1.Services;
 namespace HamroFashion.Api
 {
     /// <summary>
@@ -47,12 +49,13 @@ namespace HamroFashion.Api
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(builder.Configuration)
                 .CreateLogger();
+            Mailer.Configure(builder.Configuration);
 
             builder.Host.UseSerilog();
             return builder;
         }
 
-        protected static void ConfigureServices(IServiceCollection services, IConfiguration config)
+        protected static async void ConfigureServices(IServiceCollection services, IConfiguration config)
         {
             //Versioning
             services.AddApiVersioning(opt =>
@@ -102,6 +105,8 @@ namespace HamroFashion.Api
                 .AddEndpointsApiExplorer()
                 .AddOpenApi();
 
+            services.AddHostedService<MailerBackgroundService>();
+
             //Endpoints and related services
             services
                 .Configure<JsonOptions>(options =>
@@ -111,6 +116,7 @@ namespace HamroFashion.Api
                     options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
                 })
                 .AddProductEndpointV1()
+                .AddAdminEndpointV1()
                 .AddUserEndpointV1()
                 .AddTokenEndpointV1();
             
@@ -119,6 +125,7 @@ namespace HamroFashion.Api
             try
             {
                 db.Database.EnsureCreated();
+                await db.SeedDatabaseAsync();
             }
             catch(Exception ex)
             {
@@ -138,6 +145,7 @@ namespace HamroFashion.Api
                 .UseTokenEndpointV1()
                 .UseUserEndpointV1()
                 .UseProductEndpointV1()
+                .UseAdminEndpointV1()
                 .UseOpenApi();
         }
     }
