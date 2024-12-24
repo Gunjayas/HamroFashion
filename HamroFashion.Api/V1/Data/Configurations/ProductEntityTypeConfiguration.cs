@@ -30,6 +30,9 @@ namespace HamroFashion.Api.V1.Data.Configurations
 
             builder.HasMany(x => x.ProductCollection)
                 .WithOne(x => x.Product);
+
+            builder.HasOne(x => x.ProductCategory)
+                .WithOne(x => x.Product);
         }
     }
 }

@@ -4,8 +4,11 @@ using HamroFashion.Api.V1.Data.Entities;
 using HamroFashion.Api.V1.Exceptions;
 using HamroFashion.Api.V1.Extensions;
 using HamroFashion.Api.V1.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using static System.Net.Mime.MediaTypeNames;
@@ -37,7 +40,7 @@ namespace HamroFashion.Api.V1.Services
         /// <param name="command">The createUser command to execute</param>
         /// <param name="cancellationToken">Optional cancellation token</param>
         /// <returns>UserCreated or throws exception</returns>
-        public async Task<UserModel> CreateAsync(CreateUser command, CancellationToken cancellationToken)
+        public async Task<UserModel> CreateAsync(CreateUser command, CancellationToken cancellationToken, bool skipEmail = false)
         {
             var user = new UserEntity
             {
@@ -46,8 +49,27 @@ namespace HamroFashion.Api.V1.Services
                 PasswordHash = command.Password!.ToPasswordHash(),
             };
 
+            var role = await db.Roles.FirstOrDefaultAsync(x => x.Name == "User", cancellationToken);
+            var userRole = new UserRole
+            {
+                RoleId = role.Id,
+                UserId = user.Id
+            };
+
+            db.UserRoles.Add(userRole);
+
             db.Users.Add(user);
             await db.SaveChangesAsync(cancellationToken);
+
+            if (!skipEmail)
+            {
+                var template = System.IO.File.ReadAllText("V1/Templates/NewEmail.htm")
+                    .Replace("{{USERNAME}}", user.UserName);
+
+                MailerBackgroundService.QueueMessage(user.EmailAddress, "Welcome to HamroFashion, please complete your registration", template);
+
+            }
+          
 
             return user.ToModel();
         }
@@ -59,7 +81,7 @@ namespace HamroFashion.Api.V1.Services
         /// <param name="cancellationToken">Optional cancellation token</param>
         /// <returns>UserModel</returns>
         /// <exception cref="EntityNotFoundException">Thrown when no user found for provided id</exception>
-        public async Task<UserModel> GetByIdAsync(Guid userId, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
+        public async Task<UserModel> GetByIdAsync(Guid userId, CancellationToken cancellationToken)
         {
             var query = db.Users
                 .Include(x => x.UserRoles)
@@ -74,9 +96,8 @@ namespace HamroFashion.Api.V1.Services
             return user.ToModel();
         }
 
-        public async Task DeleteByIdAsync(ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
+        public async Task DeleteByIdAsync(Guid userId, CancellationToken cancellationToken)
         {
-            var userId = CurrentUser.GetUserId();
             var user = await db.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
 
             if (user == null)
@@ -140,10 +161,11 @@ namespace HamroFashion.Api.V1.Services
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<CartModel> GetCart(ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
+        public async Task<CartModel> GetCart(Guid userId, CancellationToken cancellationToken)
         {
-            var userId = CurrentUser.GetUserId();
             var cart = await db.CartEntities
+                .Include(x => x.CartItems)
+                    .ThenInclude(x => x.Product)
                 .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
             if (cart == null)
                 throw new EntityNotFoundException(nameof(CartEntity), userId);
@@ -151,47 +173,88 @@ namespace HamroFashion.Api.V1.Services
             return cart.ToModel();
         }
 
-        public async Task AddToCart(AddToCart command, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
+        public async Task AddToCart(Guid productId, Guid userId, CancellationToken cancellationToken)
         {
-            var userId = CurrentUser.GetUserId();
-            
             var cart = await db.CartEntities
+                .Include(x => x.CartItems)
+                    .ThenInclude(ci => ci.Product) // Eagerly load Product
                 .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
             if (cart == null)
                 throw new EntityNotFoundException(nameof(CartEntity), userId);
 
-            if (cart.CartItems.Any(x => x.ProductId == command.ProductId))
-            {
-                var item = await db.CartItems
-                    .FirstOrDefaultAsync(x => x.ProductId == command.ProductId, cancellationToken);
+            var product = await db.Products
+                .FirstOrDefaultAsync(x => x.Id ==  productId, cancellationToken);
 
-                item.Quantity += command.Quantity;
+            if (cart.CartItems != null && cart.CartItems.Any(x => x.ProductId == productId))
+            {
+                var item = cart.CartItems.First(x => x.ProductId == productId);
+                item.Quantity += 1;
+                
             }
             else
             {
-                var cartItem = new CartItem { CartId = cart.Id, ProductId = command.ProductId };
+                var cartItem = new CartItem { CartId = cart.Id, ProductId = productId, Quantity = 1, Price = product.Price };
                 db.CartItems.Add(cartItem);
             }
+       
+            await db.SaveChangesAsync(cancellationToken);
+            // Reload the cart or update the total cost directly
+            cart = await db.CartEntities
+                .Include(x => x.CartItems)
+                    .ThenInclude(ci => ci.Product)
+                .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
             cart = await UpdateTotalCost(cart, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task RemoveFromCart(Guid productId, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
-        {
-            var userId = CurrentUser.GetUserId();
 
+        public async Task RemoveFromCart(Guid productId, Guid userId, CancellationToken cancellationToken)
+        {
             var cart = await db.CartEntities
                 .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
             if (cart == null)
                 throw new EntityNotFoundException(nameof(CartEntity), userId);
-
-            if (!(cart.CartItems.Any(x => x.ProductId == productId)))
-                throw new EntityNotFoundException(nameof(CartItem), cart.Id);
 
             var item = await db.CartItems
                 .FirstOrDefaultAsync(x => x.ProductId == productId, cancellationToken);
             
             db.CartItems.Remove(item);
+            await db.SaveChangesAsync(cancellationToken);
+            // Reload the cart or update the total cost directly
+            cart = await db.CartEntities
+                .Include(x => x.CartItems)
+                    .ThenInclude(ci => ci.Product)
+                .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
+            cart = await UpdateTotalCost(cart, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task DecreaseCartQuantity(Guid productId, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
+        {
+            var userId = CurrentUser.GetUserId();
+            var cart = await db.CartEntities
+                .Include(x => x.CartItems)
+                    .ThenInclude(ci => ci.Product) // Eagerly load Product
+                .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+            if (cart == null)
+                throw new EntityNotFoundException(nameof(CartEntity), userId);
+
+            var item = cart.CartItems.First(x => x.ProductId == productId);
+            if(item.Quantity == 0)
+            {
+                await RemoveFromCart(productId, userId, cancellationToken);
+            }
+            item.Quantity -= 1;
+
+            await db.SaveChangesAsync(cancellationToken);
+            // Reload the cart or update the total cost directly
+            cart = await db.CartEntities
+                .Include(x => x.CartItems)
+                    .ThenInclude(ci => ci.Product)
+                .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
             cart = await UpdateTotalCost(cart, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
         }

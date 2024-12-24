@@ -27,13 +27,14 @@ namespace HamroFashion.Api.V1.Data.Entities
         public static CartItemModel ToModel(this CartItem entity)
             => new CartItemModel
             {
-                Cart = entity.Cart?.ToModel(),
                 ProductId = entity.ProductId,
                 CartId = entity.CartId,
-                Product = entity.Product?.ToModel()
+                Quantity = entity.Quantity,
+                Price = entity.Price
             };
 
         public static IEnumerable<CartItemModel> ToModel(this IEnumerable<CartItem> entities)
             => entities.Select(x => x.ToModel());
+
     }
 }

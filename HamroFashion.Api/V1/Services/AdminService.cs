@@ -46,13 +46,13 @@ namespace HamroFashion.Api.V1.Services
             await db.SaveChangesAsync();
         }
 
-        public async Task<List<TagModel>> GetTagsByType(string tagType, CancellationToken cancellationToken)
+        public async Task<List<Tag>> GetTagsByType(string tagType, CancellationToken cancellationToken)
         {
-            var tags = db.Tags
+            var tags = await db.Tags
                 .Where(x => x.TagType == tagType)
-                .ToModel();
+                .ToListAsync(cancellationToken);
 
-            return tags.ToList();
+            return tags;
         }
 
         public async Task BanUser(Guid userId, CancellationToken cancellationToken)

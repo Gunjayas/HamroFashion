@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Reflection;
 using System.Security;
+using HamroFashion.Api.V1.Services;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using HamroFashion.Api.V1.Extensions;
+using HamroFashion.Api.V1.Data.Configurations;
 
 namespace HamroFashion.Api.V1.Data
 {
@@ -95,5 +99,42 @@ namespace HamroFashion.Api.V1.Data
             /// <inheritdoc />
             public TransientHamroFashionContext(DbContextOptions options) : base(options) { }
         }
+
+        public async Task SeedDatabaseAsync(CancellationToken cancellationToken = default)
+        {
+            var admin = await Users.FirstOrDefaultAsync(x => x.EmailAddress == "admin@gmail.com", cancellationToken);
+            if (admin == null)
+            {
+                var user = new UserEntity
+                {
+                    UserName = "admin",
+                    EmailAddress = "admin@gmail.com",
+                    PasswordHash = "stringst".ToPasswordHash(),
+                };
+
+                Users.Add(user);
+
+                var role = await Roles.FirstOrDefaultAsync(x => x.Name == "Moderator", cancellationToken);
+                if (role != null)
+                {
+                    UserRoles.Add(new UserRole
+                    {
+                        RoleId = role.Id,
+                        UserId = user.Id
+                    });
+                }
+                else
+                {
+                    UserRoles.Add(new UserRole
+                    {
+                        RoleId = SeedData.ModRoleId,
+                        UserId = user.Id
+                    });
+                }
+
+                await SaveChangesAsync(cancellationToken);
+            }
+        }
+
     }
 }

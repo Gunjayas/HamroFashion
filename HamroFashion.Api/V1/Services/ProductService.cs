@@ -5,7 +5,9 @@ using HamroFashion.Api.V1.Exceptions;
 using HamroFashion.Api.V1.Extensions;
 using HamroFashion.Api.V1.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Security.Claims;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace HamroFashion.Api.V1.Services
 {
@@ -19,14 +21,18 @@ namespace HamroFashion.Api.V1.Services
         /// </summary>
         public readonly HamroFashionContext db;
 
-        //Imageservice
+        /// <summary>
+        /// Internally used ImageService
+        /// </summary>
+        private readonly ImageService Images;
 
-        public ProductService(HamroFashionContext db)
+        public ProductService(HamroFashionContext db, ImageService images)
         {
             this.db = db;
+            Images = images;
         }
 
-        public async Task<ProductModel> CreateAsync(CreateProduct command, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken = default)
+        public async Task<ProductModel> CreateAsync(CreateProduct command, CancellationToken cancellationToken = default)
         {
             //validate user first
 
@@ -35,28 +41,53 @@ namespace HamroFashion.Api.V1.Services
                 Name = command.Name,
                 Description = command.Description,
                 Color = command.Color,
-                ImageUrls = command?.ImageUrls,
                 Size = command?.Size,
                 Quantity = command.Quantity,
+                Price = command.Price,
                 Availability = command.Availability
             };
 
-            if (command.ProductCollection != null)
+            if (!string.IsNullOrWhiteSpace(command.ImageUrl))
             {
-                product.ProductCollection = command.ProductCollection
-                    .Select(x => new ProductCollection { ProductId = product.Id, TagId = x })
-                    .ToList();
+                try
+                {
+                    var base64 = command.ImageUrl.Split(',')[1];
+                    product.ImageUrl = await Images.UploadImageAsync("Product", $"cover_{product.Id}.{command.ImageUrl.Split('/')[1].Split(';')[0]}", base64);
+                }
+                catch (Exception err)
+                {
+                    throw new ApiException("Failed to create product", new Dictionary<string, string[]>
+                    {
+                        { nameof(command.ImageUrl), [ err.Message ] }
+                    });
+                }
+            }
+            else
+            {
+                product.ImageUrl = "https://mudmunity.blob.core.windows.net/cdn/default/car.jpg";
             }
 
-            if (command.ProductCategory.HasValue != null)
-            {
-                product.ProductCategory = new ProductCategory { ProductId = product.Id, TagId = command.ProductCategory.Value };
-            }
             if (command.ProductCollection != null)
             {
-                product.ProductCollection = command.ProductCollection
+                var ProductCollection = command.ProductCollection
                     .Select(x => new ProductCollection { ProductId = product.Id, TagId = x })
                     .ToList();
+                db.ProductCollections.AddRange(ProductCollection);
+            }
+
+            if (command.ProductCategory != null)
+            {
+                var tag = await db.Tags.FirstOrDefaultAsync(x => x.Name == command.ProductCategory);
+                var ProductCategory = new ProductCategory { ProductId = product.Id, TagId = tag.Id };
+
+                db.ProductCategories.Add(ProductCategory);
+            }
+            if (command.ProductLabel != null)
+            {
+                var ProductLabel = command.ProductLabel
+                    .Select(x => new ProductLabel { ProductId = product.Id, TagId = x })
+                    .ToList();
+                db.ProductLabels.AddRange(ProductLabel);
             }
 
             db.Products.Add(product);
@@ -117,7 +148,14 @@ namespace HamroFashion.Api.V1.Services
         public async Task<ProductModel> GetByIdAsync(Guid id, ClaimsPrincipal CurrentUser, CancellationToken cancellationToken)
         {
             var product = await db.Products
+                .Include(x => x.ProductCategory)
+                    .ThenInclude(x => x.Tag)
+                .Include(x => x.ProductCollection)
+                    .ThenInclude(x => x.Tag)
+                .Include(x => x.ProductLabel)
+                    .ThenInclude(x => x.Tag)
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
 
             if (product == null)
                 throw new EntityNotFoundException(nameof(ProductEntity), id);

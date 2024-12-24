@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HamroFashion.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fc187b060d5f1d8d14503fd397720b861ceca0c2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a3eba7a159fef4b920cdd2b81ac17dd6ee85a525")]
 [assembly: System.Reflection.AssemblyProductAttribute("HamroFashion.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HamroFashion.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
