@@ -6,7 +6,7 @@ namespace HamroFashion.Api.V1.Services
     public class ImageService
     {
         private readonly string storageAccount = "hamrofashion";
-        private readonly string accessKey = "Cq2UKKfmI7K2boAROSeGvOioL3w7A15q7rLh0MoS3Ni9AhETuGJSchgbC+dbVcaCpPUEQOkOP+N5+ASt9tdQ0Q==";
+        private readonly string accessKey = "";
         private readonly BlobServiceClient blobServiceClient;
 
         public ImageService()
