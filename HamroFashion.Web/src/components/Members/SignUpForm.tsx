@@ -63,7 +63,7 @@ return <form className="py-8 mx-auto border-green-600 2xl:max-w-xl lg:max-w-lg s
                 <h1 className='text-2xl font-bold ps-6'>Sign Up</h1>
             </div>
             <div className='text-white text-md'>
-                Enter the gateway to your virtual adventures. Sign up now to explore, interact, and conquer in the realm of api games!
+            Unlock exclusive deals and personalized picks — sign up now!
             </div>
             <hr className='my-4'/>
             <div className="relative z-0 w-full mb-5 group">

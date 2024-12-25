@@ -51,7 +51,8 @@ return <div className='bg-gray-800'>
                 <h1 className='text-2xl font-bold ps-6'>Sign In</h1>
             </div>
             <div className='text-white text-md'>
-                Enter the gateway to your virtual adventures. Sign in now to explore, interact, and conquer in the realm of api games!
+            We're here to make your shopping seamless and joyful 
+            Sign in to discover more.
             </div>
             <hr className='my-4'/>
             <div className="relative z-0 w-full mb-5 group">
